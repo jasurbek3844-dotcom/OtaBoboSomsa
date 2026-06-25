@@ -260,17 +260,18 @@
             border-radius: 12px;
             padding: 40px 36px;
             box-shadow: 0 8px 40px var(--shadow);
-            width: 360px;
+            width: 420px;
             flex-shrink: 0;
-            margin-right: 0px;
         }
 
-        .form-card h3 {
+        .form-card a {
             font-family: 'Playfair Display', serif;
             font-size: 1.4rem;
             font-weight: 700;
             margin-bottom: 6px;
-        }
+            text-decoration: none;
+            color: black  ;
+          }
 
         .form-card p {
             font-size: 0.83rem;
@@ -293,7 +294,7 @@
         }
 
         .field input {
-            width: 100%;
+            width: 330px;
             padding: 12px 14px;
             border: 1.5px solid #E8D9C0;
             border-radius: 6px;
@@ -804,6 +805,19 @@
     width: 500px;
     height: 450px;
   }
+
+  .div2{
+    display: flex ;
+  }
+  .dastavka{
+    margin-left: 55px;
+  }
+  .zakaz-dastavka{
+    display: flex ;
+  }
+  .dastavka1{
+    display: none;
+  }
     </style>
 </head>
 <body>
@@ -878,24 +892,54 @@
                     <li>To'lov naqd yoki karta</li>
                 </ul>
             </div>
+            <div>
+                <div class="form-card" id="form">
+                  <div class="div2">
+                    <a href="#zak" class="zakaz">Zakaz berish</a>
+                    <a class="dastavka" href="#das">Dastavka qilish</a>
+                  </div>
+                  <p>Barcha maydonlarni to'ldiring</p>
 
-            <div class="form-card" id="form">
-                <h3>Zakaz berish</h3>
-                <p>Barcha maydonlarni to'ldiring</p>
-
-                <div class="field">
+                  <div class="zakaz-dastavka">    
+                    <div class="zakaz1" id="zak">
+                    <div class="field">
                     <label>Ismingiz</label>
                     <input type="text" class="input-Som-Ism">
-                </div>
-                <div class="field">
-                    <label>Somsaning soni</label>
-                    <input type="number" min="1" class="input-Som-Son">
-                </div>
-                <div class="field">
-                    <label>Xona raqami</label>
-                    <input type="number" min="1" class="input-Som-Xon">
-                </div>
+                  </div>
+                  <div class="field">
+                      <label>Somsaning soni</label>
+                      <input type="number" min="1" class="input-Som-Son">
+                  </div>
+                  <div class="field">
+                      <label>Xona raqami</label>
+                      <input type="number" min="1" class="input-Som-Xon">
+                    </div>
+                  </div>
+
+
+                  <div class="dastavka1" id="das">
+                      <div class="field">
+                        <label>Ismingiz</label>
+                        <input type="text" class="das-ism">           <!-- ✅ -->
+                      </div>
+                      <div class="field">
+                        <label>Telefon raqamingiz</label>
+                        <input type="text" class="das-telefon">       <!-- ✅ -->
+                      </div>
+                      <div class="field">
+                        <label>Somsaning soni</label>
+                        <input type="number" min="1" class="das-son"> <!-- ✅ -->
+                      </div>
+                      <div class="field">
+                        <label>Uy manzilingiz</label>
+                        <input type="text" class="das-manzil">        <!-- ✅ -->
+                      </div>
+                    </div>
+                  </div>
+                  </div>
+                  
                 <button class="btn-order bbtn">Zakaz Qilish →</button>
+            </div>
             </div>
     </section>
 
