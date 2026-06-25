@@ -94,7 +94,10 @@ function renderOrders() {
         <div class="avatar">${initials}</div>
         <div class="info">
           <div class="name">${order.ism}</div>
-          <div class="meta">🫓 ${order.son} ta somsa · 🚪 ${order.xona}-xona</div>
+          <div class="meta">${order.tur === "dastavka"
+            ? `🛵 Dastavka · 🫓 ${order.son} ta · 📍 ${order.manzil} · 📞 ${order.telefon}`
+            : `🏠 Xona zakazi · 🫓 ${order.son} ta somsa · 🚪 ${order.xona}-xona`
+          }</div>
           <div class="time">🕐 ${vaqt}</div>
         </div>
         <span class="pill ${order.status === "accepted" ? "accepted" : "pending"}">
@@ -103,6 +106,7 @@ function renderOrders() {
         ${order.status === "pending"
           ? `<button class="abtn" onclick="acceptOrder('${order.id}', this)">✔ Qabul qilish</button>`
           : ""}
+        <button class="dbtn" onclick="deleteOrder('${order.id}', this)">🗑️</button>
       </div>
     `;
   }).join("");
@@ -126,10 +130,28 @@ window.acceptOrder = async function(id, btn) {
   }
 };
 
-function showNotif(order) {
+window.deleteOrder = async function(id, btn) {
+  if (!confirm("Bu zakazni o'chirishni tasdiqlaysizmi?")) return;
+
+  btn.disabled = true;
+  btn.textContent = "...";
+
+  try {
+    await fetch(DB + "/buyurtmalar/" + id + ".json", { method: "DELETE" });
+    showToast("🗑️ Zakaz o'chirildi!");
+    loadOrders();
+  } catch (error) {
+    console.log("O'chirishda xatolik:", error);
+    btn.disabled = false;
+    btn.textContent = "🗑️";
+  }
+};
+
+  function showNotif(order){
   const popup = document.getElementById("notif-popup");
-  document.getElementById("notif-body").textContent =
-    `${order.ism} — ${order.son} ta somsa, ${order.xona}-xona`;
+  document.getElementById("notif-body").textContent = order.tur === "dastavka"
+    ? `${order.ism} — ${order.son} ta somsa, 📍 ${order.manzil}`
+    : `${order.ism} — ${order.son} ta somsa, ${order.xona}-xona`;
   popup.style.display = "block";
   clearTimeout(window.notifTimer);
   window.notifTimer = setTimeout(() => popup.style.display = "none", 8000);
