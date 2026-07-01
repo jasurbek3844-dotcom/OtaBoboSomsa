@@ -1,3 +1,4 @@
+
 const DB = "https://somsa-c5ae4-default-rtdb.firebaseio.com";
 const btn = document.querySelector(".bbtn");
 
@@ -484,7 +485,7 @@ function initMap() {
   // Xarita wrapper
   const wrapper = document.createElement("div");
   wrapper.id = "map-container";
-  wrapper.style.cssText = "margin-bottom:16px;";
+  wrapper.style.cssText = "margin-bottom:16px;width:100%;max-width:100%;overflow:hidden;";
   wrapper.innerHTML = `
     <div style="font-size:12px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#1A1208;margin-bottom:8px">
       📍 Manzilingizni xaritadan tanlang
@@ -515,12 +516,12 @@ function initMap() {
 
     // ── QIDIRUV QATORI ──
     const searchBox = document.createElement("div");
-    searchBox.style.cssText = "display:flex;gap:8px;margin-bottom:10px;";
+    searchBox.style.cssText = "display:flex;gap:6px;margin-bottom:10px;width:100%;min-width:0;";
     searchBox.innerHTML = `
-      <input id="map-search-input" type="text" placeholder="Manzil qidirish... (ko'cha, mahalla...)"
-        style="flex:1;padding:10px 14px;border:1.5px solid #E8D9C0;border-radius:8px;font-family:'Inter',sans-serif;font-size:13px;color:#1A1208;background:#FDF6EC;outline:none"/>
-      <button id="map-search-btn" style="padding:10px 16px;background:#8B3A1C;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap">🔍 Topish</button>
-      <button id="map-locate-btn" title="Joylashuvimni aniqlash" style="padding:10px 14px;background:#1565c0;color:#fff;border:none;border-radius:8px;font-size:16px;cursor:pointer">📍</button>
+      <input id="map-search-input" type="text" placeholder="Ko'cha, mahalla..."
+        style="flex:1;min-width:0;padding:10px 10px;border:1.5px solid #E8D9C0;border-radius:8px;font-family:'Inter',sans-serif;font-size:13px;color:#1A1208;background:#FDF6EC;outline:none"/>
+      <button id="map-search-btn" style="padding:10px 12px;background:#8B3A1C;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0">🔍</button>
+      <button id="map-locate-btn" title="Joylashuvimni aniqlash" style="padding:10px 12px;background:#1565c0;color:#fff;border:none;border-radius:8px;font-size:15px;cursor:pointer;flex-shrink:0">📍</button>
     `;
     const mapEl2 = document.getElementById("leaflet-map");
     mapEl2.parentNode.insertBefore(searchBox, mapEl2);
