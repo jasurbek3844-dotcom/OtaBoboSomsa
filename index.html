@@ -578,6 +578,26 @@
 
             footer { padding: 18px 16px; }
         }
+
+        /* Xarita overflow fix */
+        #map-container, #leaflet-map {
+            max-width: 100% !important;
+            width: 100% !important;
+        }
+        .leaflet-container {
+            max-width: 100% !important;
+        }
+        /* Barcha ichki elementlar overflow bo'lmasin */
+        .dastavka1, .zakaz1, .zakaz-dastavka {
+            width: 100%;
+            max-width: 100%;
+            overflow: hidden;
+        }
+        /* Global overflow fix */
+        html, body {
+            overflow-x: hidden;
+            max-width: 100vw;
+        }
     </style>
 </head>
 <body>
