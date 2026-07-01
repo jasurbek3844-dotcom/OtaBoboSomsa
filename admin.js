@@ -85,7 +85,7 @@ function renderOrders() {
         <div class="info">
           <div class="name">${order.ism}</div>
           <div class="meta">${order.tur === "dastavka"
-            ? `🛵 Dastavka · 🫓 ${order.son} ta · 📍 ${order.manzil} · 📞 ${order.telefon}`
+            ? `🛵 Dastavka · 🫓 ${order.son} ta · 📍 ${order.manzil} · 📞 ${order.telefon}${order.mapLink ? ` · <a href="${order.mapLink}" target="_blank" style="color:#C8860A;font-weight:600;text-decoration:none">🗺️ Xaritada ko'rish</a>` : ""}`
             : `🏠 Xona zakazi · 🫓 ${order.son} ta somsa · 🚪 ${order.xona}-xona`
           }</div>
           <div class="time">🕐 ${vaqt}</div>
