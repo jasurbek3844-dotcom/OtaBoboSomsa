@@ -102,6 +102,7 @@ dastavkaBtn.addEventListener("click", () => {
   btn.textContent = "Dastavka Qilish →";
   dastavkaBtn.style.color = "var(--saffron)";
   zakazBtn.style.color = "black";
+  setTimeout(initMap, 100);
 });
 zakazBtn.addEventListener("click", () => {
   activeTab = "zakaz";
@@ -133,8 +134,11 @@ async function submitZakaz() {
     const data = await res.json();
     currentOrderId = data.name;
     btn.textContent = "✅ Yuborildi!";
-    showToast("🫓 Buyurtmangiz yuborildi! Admin tasdiqlashini kuting...", "#1565c0", 6000);
-    watchStatus(() => { showNotification(ism, son, xona+"-xona"); ismInput.value=""; sonInput.value=""; xonaInput.value=""; });
+    showToast("🫓 Zakaz yuborildi!", "#2e7d32", 3000);
+    // Tracker ochish
+    showOrderTracker(ism, son, xona+"-xona", currentOrderId);
+    ismInput.value=""; sonInput.value=""; xonaInput.value="";
+    resetBtn("Zakaz Qilish →");
   } catch(err) { showToast("❌ Xatolik yuz berdi!", "crimson"); resetBtn("Zakaz Qilish →"); }
 }
 
@@ -144,13 +148,18 @@ async function submitDastavka() {
   const ism=ismInput.value.trim(), telefon=telefonInput.value.trim(), son=sonInput.value.trim(), manzil=manzilInput.value.trim();
   if (!ism||!telefon||!son||!manzil) { showToast("⚠️ Barcha maydonlarni to'ldiring!", "#e65100"); return; }
   btn.disabled=true; btn.textContent="Yuborilmoqda...";
-  const order={tur:"dastavka",ism,telefon,son:Number(son),manzil,status:"pending",vaqt:new Date().toISOString()};
+  const mapLink = window._selectedLatLng
+    ? `https://maps.google.com/?q=${window._selectedLatLng.lat},${window._selectedLatLng.lng}`
+    : null;
+  const order={tur:"dastavka",ism,telefon,son:Number(son),manzil,mapLink,status:"pending",vaqt:new Date().toISOString()};
   try {
     const res=await fetch(DB+"/buyurtmalar.json",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(order)});
     const data=await res.json(); currentOrderId=data.name;
     btn.textContent="✅ Yuborildi!";
-    showToast("🛵 Dastavka zakazingiz yuborildi!","#1565c0",6000);
-    watchStatus(()=>{ showNotification(ism,son,manzil); ismInput.value=""; telefonInput.value=""; sonInput.value=""; manzilInput.value=""; });
+    showToast("🛵 Dastavka zakazi yuborildi!", "#2e7d32", 3000);
+    showOrderTracker(ism, son, manzil, currentOrderId);
+    ismInput.value=""; telefonInput.value=""; sonInput.value=""; manzilInput.value="";
+    resetBtn("Dastavka Qilish →");
   } catch(err) { showToast("❌ Xatolik yuz berdi!","crimson"); resetBtn("Dastavka Qilish →"); }
 }
 
@@ -166,6 +175,109 @@ function watchStatus(onAccepted) {
   }, 2000);
 }
 function resetBtn(text) { btn.disabled=false; btn.textContent=text; }
+
+// ══════════════════════════════
+//  ZAKAZ TRACKER
+// ══════════════════════════════
+function showOrderTracker(ism, son, joy, orderId) {
+  const old = document.getElementById("order-tracker");
+  if (old) old.remove();
+
+  const overlay = document.createElement("div");
+  overlay.id = "order-tracker";
+  overlay.style.cssText = `
+    position:fixed;inset:0;z-index:9999;
+    background:rgba(26,18,8,0.6);
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Inter',sans-serif;
+    padding:20px;
+  `;
+
+  overlay.innerHTML = `
+    <div style="background:#fff;border-radius:20px;padding:36px 32px;max-width:380px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,0.3);text-align:center">
+      <div style="font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:700;color:#1A1208;margin-bottom:4px">Zakazingiz holati</div>
+      <div style="font-size:13px;color:#9C8268;margin-bottom:28px">${ism} · ${son} ta somsa · ${joy}</div>
+
+      <div style="display:flex;flex-direction:column;gap:0;margin-bottom:24px;text-align:left">
+        <div id="step-pending" style="display:flex;gap:14px;align-items:flex-start;padding:14px 16px;border-radius:12px;background:#fff8e1">
+          <div id="icon-pending" style="width:40px;height:40px;border-radius:50%;background:#ffe082;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">📨</div>
+          <div style="padding-top:4px">
+            <div style="font-size:14px;font-weight:600;color:#1A1208">Zakaz yuborildi</div>
+            <div style="font-size:12px;color:#9C8268;margin-top:2px">Admin qabul qilishini kuting...</div>
+          </div>
+        </div>
+        <div style="width:2px;height:14px;background:#E8D9C0;margin-left:35px"></div>
+        <div id="step-accepted" style="display:flex;gap:14px;align-items:flex-start;padding:14px 16px;border-radius:12px;opacity:0.4">
+          <div id="icon-accepted" style="width:40px;height:40px;border-radius:50%;background:#F0E8D8;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">✅</div>
+          <div style="padding-top:4px">
+            <div style="font-size:14px;font-weight:600;color:#1A1208">Zakaz qabul qilindi</div>
+            <div style="font-size:12px;color:#9C8268;margin-top:2px">Tez orada yetkazamiz 🫓</div>
+          </div>
+        </div>
+      </div>
+
+      <div id="tracker-badge" style="display:inline-flex;align-items:center;gap:8px;padding:10px 20px;border-radius:30px;background:#fff8e1;color:#e65100;font-size:14px;font-weight:700;margin-bottom:24px">
+        <span style="width:8px;height:8px;border-radius:50%;background:#e65100;animation:pulse 1.4s infinite;display:inline-block"></span>
+        Kutilmoqda...
+      </div>
+
+      <button onclick="closeTracker()" style="width:100%;padding:12px;background:#F0E8D8;color:#8B3A1C;border:none;border-radius:10px;font-family:'Inter',sans-serif;font-weight:700;font-size:14px;cursor:pointer">
+        Yopish
+      </button>
+      <div style="font-size:11px;color:#C4B49A;margin-top:10px">Sahifani yopsangiz ham zakaz saqlanadi</div>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+  startTracking(orderId);
+}
+
+function startTracking(orderId) {
+  if (window._trackTimer) clearInterval(window._trackTimer);
+  window._trackTimer = setInterval(async () => {
+    try {
+      const res   = await fetch(DB + "/buyurtmalar/" + orderId + ".json");
+      const order = await res.json();
+      if (!order) { clearInterval(window._trackTimer); return; }
+
+      const badge  = document.getElementById("tracker-badge");
+      const stepP  = document.getElementById("step-pending");
+      const stepA  = document.getElementById("step-accepted");
+      const iconP  = document.getElementById("icon-pending");
+      const iconA  = document.getElementById("icon-accepted");
+
+      if (order.status === "accepted") {
+        clearInterval(window._trackTimer);
+        if (stepP) { stepP.style.background = "#e8f5e9"; }
+        if (iconP) { iconP.style.background = "#4caf50"; iconP.textContent = "✅"; }
+        if (stepA) { stepA.style.opacity = "1"; stepA.style.background = "#e8f5e9"; }
+        if (iconA) { iconA.style.background = "#4caf50"; }
+        if (badge) {
+          badge.style.background = "#e8f5e9";
+          badge.style.color = "#2e7d32";
+          badge.innerHTML = `<span style="width:8px;height:8px;border-radius:50%;background:#4caf50;display:inline-block"></span> Qabul qilindi — yo'lda! 🫓`;
+        }
+      } else if (order.status === "rejected") {
+        clearInterval(window._trackTimer);
+        if (badge) {
+          badge.style.background = "#fff0f0";
+          badge.style.color = "#c62828";
+          badge.innerHTML = `<span style="width:8px;height:8px;border-radius:50%;background:#c62828;display:inline-block"></span> Afsuski rad etildi`;
+        }
+      }
+    } catch(err) {}
+  }, 2000);
+}
+
+window.closeTracker = function() {
+  if (window._trackTimer) clearInterval(window._trackTimer);
+  const el = document.getElementById("order-tracker");
+  if (el) {
+    el.style.opacity = "0";
+    el.style.transition = "opacity 0.3s";
+    setTimeout(() => el.remove(), 300);
+  }
+};
 
 function showNotification(ism,son,joy) {
   const old=document.getElementById("zakaz-notif"); if(old) old.remove();
@@ -340,6 +452,182 @@ async function checkWorkStatus() {
       else { btn.textContent=activeTab==="zakaz"?"Zakaz Qilish →":"Dastavka Qilish →"; btn.style.opacity="1"; btn.style.cursor="pointer"; }
     }
   } catch(err) {}
+}
+
+
+// ══════════════════════════════
+//  XARITA (MANZIL TANLASH)
+// ══════════════════════════════
+let _mapLoaded = false;
+let _leafletMap = null;
+let _marker = null;
+
+function loadLeaflet(cb) {
+  if (_mapLoaded) { cb(); return; }
+  // CSS
+  const link = document.createElement("link");
+  link.rel = "stylesheet";
+  link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
+  document.head.appendChild(link);
+  // JS
+  const script = document.createElement("script");
+  script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
+  script.onload = () => { _mapLoaded = true; cb(); };
+  document.head.appendChild(script);
+}
+
+function initMap() {
+  const dastavkaDiv = document.querySelector(".dastavka1");
+  if (!dastavkaDiv) return;
+  if (document.getElementById("map-container")) return; // allaqachon bor
+
+  // Xarita wrapper
+  const wrapper = document.createElement("div");
+  wrapper.id = "map-container";
+  wrapper.style.cssText = "margin-bottom:16px;";
+  wrapper.innerHTML = `
+    <div style="font-size:12px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#1A1208;margin-bottom:8px">
+      📍 Manzilingizni xaritadan tanlang
+    </div>
+    <div id="leaflet-map" style="height:220px;border-radius:10px;border:1.5px solid #E8D9C0;overflow:hidden;background:#f0e8d8;display:flex;align-items:center;justify-content:center;">
+      <span style="color:#9C8268;font-size:13px">Yuklanmoqda...</span>
+    </div>
+    <div id="map-hint" style="font-size:12px;color:#9C8268;margin-top:6px;display:flex;align-items:center;gap:6px">
+      <span>👆</span> Xaritaga bosib manzilingizni belgilang
+    </div>
+  `;
+
+  // Manzil inputdan oldin qo'shish
+  const manzilField = dastavkaDiv.querySelector(".field:last-of-type");
+  if (manzilField) dastavkaDiv.insertBefore(wrapper, manzilField);
+  else dastavkaDiv.appendChild(wrapper);
+
+  loadLeaflet(() => {
+    const mapEl = document.getElementById("leaflet-map");
+    if (!mapEl || _leafletMap) return;
+
+    // Toshkent markazi
+    _leafletMap = L.map("leaflet-map").setView([41.2995, 69.2401], 12);
+
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: "© OpenStreetMap"
+    }).addTo(_leafletMap);
+
+    // ── QIDIRUV QATORI ──
+    const searchBox = document.createElement("div");
+    searchBox.style.cssText = "display:flex;gap:8px;margin-bottom:10px;";
+    searchBox.innerHTML = `
+      <input id="map-search-input" type="text" placeholder="Manzil qidirish... (ko'cha, mahalla...)"
+        style="flex:1;padding:10px 14px;border:1.5px solid #E8D9C0;border-radius:8px;font-family:'Inter',sans-serif;font-size:13px;color:#1A1208;background:#FDF6EC;outline:none"/>
+      <button id="map-search-btn" style="padding:10px 16px;background:#8B3A1C;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap">🔍 Topish</button>
+      <button id="map-locate-btn" title="Joylashuvimni aniqlash" style="padding:10px 14px;background:#1565c0;color:#fff;border:none;border-radius:8px;font-size:16px;cursor:pointer">📍</button>
+    `;
+    const mapEl2 = document.getElementById("leaflet-map");
+    mapEl2.parentNode.insertBefore(searchBox, mapEl2);
+
+    // Qidiruv tugmasi
+    document.getElementById("map-search-btn").addEventListener("click", async () => {
+      const query = document.getElementById("map-search-input").value.trim();
+      if (!query) return;
+      const btn2 = document.getElementById("map-search-btn");
+      btn2.textContent = "..."; btn2.disabled = true;
+      try {
+        const res  = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1&countrycodes=uz`);
+        const data = await res.json();
+        if (data && data[0]) {
+          const lat = parseFloat(data[0].lat), lng = parseFloat(data[0].lon);
+          _leafletMap.setView([lat, lng], 16);
+          if (_marker) _marker.remove();
+          _marker = L.marker([lat, lng]).addTo(_leafletMap);
+          window._selectedLatLng = { lat: lat.toFixed(6), lng: lng.toFixed(6) };
+          const manzilInput = document.querySelector("#das .das-manzil");
+          if (manzilInput) manzilInput.value = data[0].display_name.split(",").slice(0,3).join(", ");
+          const hint = document.getElementById("map-hint");
+          if (hint) hint.innerHTML = `<span>✅</span> <strong style="color:#2e7d32">${data[0].display_name.split(",").slice(0,3).join(", ")}</strong>`;
+        } else {
+          showToast("❌ Manzil topilmadi, boshqacha yozing", "#e65100");
+        }
+      } catch(err) { showToast("❌ Qidirishda xatolik", "#e65100"); }
+      finally { btn2.textContent = "🔍 Topish"; btn2.disabled = false; }
+    });
+
+    // Enter tugmasi bilan ham qidirish
+    document.getElementById("map-search-input").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") document.getElementById("map-search-btn").click();
+    });
+
+    // 📍 GPS tugmasi
+    document.getElementById("map-locate-btn").addEventListener("click", () => {
+      const locBtn = document.getElementById("map-locate-btn");
+      locBtn.textContent = "⏳"; locBtn.disabled = true;
+      if (!navigator.geolocation) { showToast("❌ GPS qo'llab-quvvatlanmaydi", "#e65100"); locBtn.textContent = "📍"; locBtn.disabled = false; return; }
+      navigator.geolocation.getCurrentPosition(async (pos) => {
+        const lat = pos.coords.latitude, lng = pos.coords.longitude;
+        _leafletMap.setView([lat, lng], 16);
+        if (_marker) _marker.remove();
+        _marker = L.marker([lat, lng]).addTo(_leafletMap);
+        window._selectedLatLng = { lat: lat.toFixed(6), lng: lng.toFixed(6) };
+        const hint = document.getElementById("map-hint");
+        if (hint) hint.innerHTML = `<span>⏳</span> Manzil aniqlanmoqda...`;
+        try {
+          const res  = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`);
+          const data = await res.json();
+          const parts = [data.address?.road, data.address?.suburb, data.address?.city].filter(Boolean);
+          const shortAddr = parts.length ? parts.join(", ") : `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+          const manzilInput = document.querySelector("#das .das-manzil");
+          if (manzilInput) manzilInput.value = shortAddr;
+          if (hint) hint.innerHTML = `<span>✅</span> <strong style="color:#2e7d32">${shortAddr}</strong>`;
+        } catch(err) {
+          const manzilInput = document.querySelector("#das .das-manzil");
+          if (manzilInput) manzilInput.value = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+        }
+        locBtn.textContent = "📍"; locBtn.disabled = false;
+      }, () => {
+        showToast("❌ GPS ruxsatini bering", "#e65100");
+        locBtn.textContent = "📍"; locBtn.disabled = false;
+      }, { enableHighAccuracy: true, timeout: 8000 });
+    });
+
+    // Xaritaga bosish
+    _leafletMap.on("click", async (e) => {
+      const { lat, lng } = e.latlng;
+      window._selectedLatLng = { lat: lat.toFixed(6), lng: lng.toFixed(6) };
+
+      // Marker qo'yish
+      if (_marker) _marker.remove();
+      _marker = L.marker([lat, lng]).addTo(_leafletMap);
+
+      // Manzilni avtomatik to'ldirish (reverse geocoding)
+      const hint = document.getElementById("map-hint");
+      if (hint) hint.innerHTML = `<span>⏳</span> Manzil aniqlanmoqda...`;
+
+      try {
+        const res  = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`);
+        const data = await res.json();
+        const addr = data.display_name || `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+        // Qisqa manzil
+        const parts = [data.address?.road, data.address?.suburb, data.address?.city].filter(Boolean);
+        const shortAddr = parts.length ? parts.join(", ") : addr;
+
+        const manzilInput = document.querySelector("#das .das-manzil");
+        if (manzilInput) manzilInput.value = shortAddr;
+
+        if (hint) hint.innerHTML = `<span>✅</span> <strong style="color:#2e7d32">${shortAddr}</strong>`;
+      } catch(err) {
+        const manzilInput = document.querySelector("#das .das-manzil");
+        if (manzilInput) manzilInput.value = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+        if (hint) hint.innerHTML = `<span>📍</span> Manzil belgilandi`;
+      }
+    });
+
+    // Foydalanuvchi joylashuvini aniqlash
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(pos => {
+        const { latitude, longitude } = pos.coords;
+        _leafletMap.setView([latitude, longitude], 15);
+      }, () => {});
+    }
+  });
 }
 
 // ══════════════════════════════
